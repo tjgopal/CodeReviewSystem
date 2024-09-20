@@ -3,7 +3,7 @@ import {useForm} from 'react-hook-form'
 import { useState, useTransition } from 'react'
 import {zodResolver} from '@hookform/resolvers/zod'
 import * as z from 'zod'
-import { loginSchema } from '@/schemas/index'
+import { RegisterSchema } from '@/schemas/index'
 import {
     Form,
     FormField,
@@ -17,28 +17,29 @@ import { Input } from '@/components/ui/input'
 import { Button } from '../ui/button'
 import { FormError } from '../form-error'
 import { FormSucess } from '../form-success'
-import { login } from '@/actions/login'
+import { register } from '@/actions/register'
 import axios from'axios'
 
 
 
-const LoginForm = () => {
+const RegisterForm = () => {
     const[isPending,startTransistion]=useTransition()
     const [isError,setIsError]=useState<string|undefined>('')
     const [isSucess,setIsSucess]=useState<string|undefined>('')
-    const form=useForm<z.infer<typeof loginSchema>>({
-        resolver:zodResolver(loginSchema),
+    const form=useForm<z.infer<typeof RegisterSchema>>({
+        resolver:zodResolver(RegisterSchema),
         defaultValues:{
             email:'',
-            password:''
+            password:'',
+            name:''
         }
     })
-    const onSubmit=(values:z.infer<typeof loginSchema>)=>{
+    const onSubmit=(values:z.infer<typeof RegisterSchema>)=>{
             // axios.post('/auth/login',values).then((response)=>console.log(response))
             setIsError('')
             setIsSucess('')
             startTransistion(()=>{
-                login(values)
+                register(values)
                 .then((data)=>{
                     setIsError(data.error)
                     setIsSucess(data.sucess)
@@ -46,9 +47,9 @@ const LoginForm = () => {
             })
     }
   return (
-    <CardWrapper headerLabel='Welcome Back'
-    backButtonLabel='Dont have an account'
-    backButtonHref='/auth/register'
+    <CardWrapper headerLabel='Create a Account'
+    backButtonLabel='Already have an account?'
+    backButtonHref='/auth/login'
     showSocial
     >
         <Form {...form}>
@@ -56,6 +57,23 @@ const LoginForm = () => {
             onSubmit={form.handleSubmit(onSubmit)}
             className='space-y-6'>
                 <div className='space-y-4'>
+                <FormField
+                    control={form.control}
+                    name='name'
+                    render={({field})=>(
+                        <FormItem>
+                            <FormLabel>name</FormLabel>
+                            <FormControl>
+                                <Input
+                                {...field}
+                                placeholder='Enter name'
+                                type='name'
+                                />
+                            </FormControl>
+                            <FormMessage/>
+                        </FormItem>
+                    )}
+                    />
                     <FormField
                     control={form.control}
                     name='email'
@@ -94,7 +112,7 @@ const LoginForm = () => {
                     <FormError message={isError}/>
                     <FormSucess message={isSucess}/>
                 <Button className='w-full items-center' type='submit'>
-                    Login
+                    Register
                 </Button>
             </form>
         </Form>
@@ -102,4 +120,4 @@ const LoginForm = () => {
   )
 }
 
-export default LoginForm
+export default RegisterForm
