@@ -1,6 +1,7 @@
 'use client'
 import {useForm} from 'react-hook-form'
 import { useState, useTransition } from 'react'
+import { useSearchParams } from 'next/navigation'
 import {zodResolver} from '@hookform/resolvers/zod'
 import * as z from 'zod'
 import { loginSchema } from '@/schemas/index'
@@ -23,6 +24,8 @@ import axios from'axios'
 
 
 const LoginForm = () => {
+    const serachParams=useSearchParams()
+    const URLerror=serachParams.get('error')=="OAuthAccountNotLinked"?"Email is already present":""
     const[isPending,startTransistion]=useTransition()
     const [isError,setIsError]=useState<string|undefined>('')
     const [isSucess,setIsSucess]=useState<string|undefined>('')
@@ -91,7 +94,7 @@ const LoginForm = () => {
                     )}
                     />
                 </div>
-                    <FormError message={isError}/>
+                    <FormError message={isError|| URLerror}/>
                     <FormSucess message={isSucess}/>
                 <Button className='w-full items-center' type='submit'>
                     Login
