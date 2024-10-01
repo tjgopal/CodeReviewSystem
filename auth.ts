@@ -28,6 +28,7 @@ NextAuth({
 
             const exsistingUser= await getuserById(user.id)
             if(!exsistingUser) return false
+            // console.log("userlogged in")
             return true
         },
         async session({token,session}){

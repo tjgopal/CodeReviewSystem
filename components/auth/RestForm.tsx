@@ -1,10 +1,9 @@
 'use client'
 import {useForm} from 'react-hook-form'
 import { useState, useTransition } from 'react'
-import { useSearchParams } from 'next/navigation'
 import {zodResolver} from '@hookform/resolvers/zod'
 import * as z from 'zod'
-import { loginSchema } from '@/schemas/index'
+import { ResetSchema } from '@/schemas/index'
 import {
     Form,
     FormField,
@@ -18,42 +17,40 @@ import { Input } from '@/components/ui/input'
 import { Button } from '../ui/button'
 import { FormError } from '../form-error'
 import { FormSucess } from '../form-success'
-import { login } from '@/actions/login'
-import axios from'axios'
-import Link from 'next/link'
+import { reset } from '@/actions/reset'
 
 
 
-const LoginForm = () => {
-    const serachParams=useSearchParams()
-    const URLerror=serachParams.get('error')=="OAuthAccountNotLinked"?"Email is already present":""
+
+const ResetForm = () => {
     const[isPending,startTransistion]=useTransition()
     const [isError,setIsError]=useState<string|undefined>('')
     const [isSucess,setIsSucess]=useState<string|undefined>('')
-    const form=useForm<z.infer<typeof loginSchema>>({
-        resolver:zodResolver(loginSchema),
+    const form=useForm<z.infer<typeof ResetSchema>>({
+        resolver:zodResolver(ResetSchema),
         defaultValues:{
             email:'',
-            password:''
         }
     })
-    const onSubmit=(values:z.infer<typeof loginSchema>)=>{
+    const onSubmit=(values:z.infer<typeof ResetSchema>)=>{
             // axios.post('/auth/login',values).then((response)=>console.log(response))
+
             setIsError('')
             setIsSucess('')
             startTransistion(()=>{
-                login(values)
+                reset(values)
                 .then((data)=>{
+                    console.log(data)
                     setIsError(data.error)
                     setIsSucess(data.success)
                 })
             })
+
     }
   return (
-    <CardWrapper headerLabel='Welcome Back'
-    backButtonLabel='Dont have an account'
-    backButtonHref='/auth/register'
-    showSocial
+    <CardWrapper headerLabel='Forget Password'
+    backButtonLabel='Back to login'
+    backButtonHref='/auth/login'
     >
         <Form {...form}>
             <form 
@@ -77,34 +74,18 @@ const LoginForm = () => {
                         </FormItem>
                     )}
                     />
-                    <FormField
-                    control={form.control}
-                    name='password'
-                    render={({field})=>(
-                        <FormItem>
-                            <FormLabel>Password</FormLabel>
-                            <FormControl>
-                                <Input
-                                {...field}
-                                placeholder='Enter password'
-                                type='password'
-                                />
-                            </FormControl>
-                            <Button 
-                            className='px-2' size='sm' variant='link' asChild>
-                                <Link href='/auth/reset'>
-                                        Forgot Password 
-                                </Link>
-                            </Button>
-                            <FormMessage/>
-                        </FormItem>
-                    )}
-                    />
+                    
                 </div>
-                    <FormError message={isError|| URLerror}/>
+                    <FormError message={isError}/>
+                        {
+                        isError && <h1> {isSucess} </h1>
+                        }
                     <FormSucess message={isSucess}/>
+                        {
+                        isSucess && <h1> {isSucess} </h1>
+                        }
                 <Button className='w-full items-center' type='submit'>
-                    Login
+                    Send Resend Link
                 </Button>
             </form>
         </Form>
@@ -112,4 +93,4 @@ const LoginForm = () => {
   )
 }
 
-export default LoginForm
+export default ResetForm

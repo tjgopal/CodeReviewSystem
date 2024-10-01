@@ -6,18 +6,17 @@ import { signIn } from "@/auth"
 import { DEFAULT_LOGIN_REDIRECT } from "@/routes"
 import { AuthError } from "next-auth"
 import { getuserByEmail } from "@/data/user"
-import { error } from "console"
 import { TokenVerified } from "@/lib/token"
 import { sendEmailVerification } from "@/lib/mail"
 export const login= async (value:z.infer<typeof loginSchema>)=>{
     const validateFields=loginSchema.safeParse(value)
     if(!validateFields.success){
-        return {error:"invalid login"}
+        return {error:"invalid login" ,success:null}
     }
     const {email,password}=validateFields.data
     const exsistinguser=await getuserByEmail(email)
     if(!exsistinguser || !exsistinguser.email|| !exsistinguser.password){
-        return {error:"Inavlid credentails "}
+        return {error:"Inavlid credentails  ",success:null}
     }
     if(!exsistinguser.emailVerified){
         const verifiedtoken= await TokenVerified(exsistinguser.email)
@@ -25,7 +24,7 @@ export const login= async (value:z.infer<typeof loginSchema>)=>{
             verifiedtoken.email,
             verifiedtoken.token
         )
-        return {sucess:"email verified"}
+        return {success:"email verified",email:null}
     }
     try {
         await signIn('credentials',{
@@ -36,11 +35,13 @@ export const login= async (value:z.infer<typeof loginSchema>)=>{
         if(error instanceof AuthError){
             switch(error.type){
                 case "CredentialsSignin":
-                    return {error:"Inavlid credentials"}
+                    return {error:"Inavlid credentials",success:null}
                 default:
-                    return {error:"soemthing went wrong "}
+                    return {error:"something went wrong ",success:null}
             }
         }
         throw error
     }
+    console.log("success:login successfull")
+    return { success: "Login successful", error: null };
 }

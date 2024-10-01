@@ -17,6 +17,7 @@ export const register= async (value:z.infer<typeof RegisterSchema>)=>{
     const hashedpassword=await bcrypt.hash(password,10)
     const existingUser=await getuserByEmail(email)
     if(existingUser){
+        console.log("adsfads",existingUser)
         return {error:"already email exists"}
     }
 
@@ -30,7 +31,8 @@ export const register= async (value:z.infer<typeof RegisterSchema>)=>{
         const user = await db.user.create({
           data: userData,
         });
-        console.log('User created:', user);
+        const userbyemail= await getuserByEmail(userData.email)
+
       } catch (error) {
         console.error('Error creating user:', error);
       

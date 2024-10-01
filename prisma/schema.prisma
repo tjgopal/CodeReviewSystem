@@ -59,3 +59,11 @@ model verificationToken{
   expiry DateTime
   @@unique([email,token]) // for every email the token is new 
 }
+
+model PasswordRestToken{
+  id String @id @default(cuid())
+  email String
+  token String @unique
+  expires DateTime
+  @@unique([email,token])
+}

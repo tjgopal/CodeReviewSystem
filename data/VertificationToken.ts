@@ -4,7 +4,7 @@ export const getVerificationTokenByToken= async (token:string)=>{
     try {
          const verifiedtoken= await db.verificationToken.findUnique({
             where:{token}
-         })
+         })//returns entire method not just the  true or false
 
          return verifiedtoken
     } catch  {
