@@ -8,6 +8,10 @@ import { AuthError } from "next-auth";
 import { getuserByEmail } from "@/data/user";
 import { genrateTwoFactor, TokenVerified } from "@/lib/token";
 import { sendEmailVerification, twoFactorToken } from "@/lib/mail";
+import { getTwoFactorByEmail } from "@/data/two-factor-token";
+import { error } from "console";
+import { getTwoFactorConfrimationById } from "@/data/two-factor-confirmation";
+import { db } from "@/lib/db";
 
 export const login = async (value: z.infer<typeof loginSchema>) => {
   const validateFields = loginSchema.safeParse(value);
@@ -33,6 +37,33 @@ export const login = async (value: z.infer<typeof loginSchema>) => {
     if (code) {
       //verfiy code
       //checkign of the code with the database
+      // check if the token exsists or not
+      // check if its same or not
+      // check if its expired or not
+      const twofactortoken = await getTwoFactorByEmail(exsistinguser.email);
+      if (!twofactortoken) {
+        return { error: "Invalid code" };
+      }
+      if (twofactortoken.token != code) {
+        return { error: "Invalid code" };
+      }
+      const hasExipred = new Date(twofactortoken.expires) < new Date();
+      if (hasExipred) {
+        return { error: "Code expired" };
+      }
+      const existingconfirmation = await getTwoFactorConfrimationById(
+        exsistinguser.id
+      );
+      if (existingconfirmation) {
+        await db.twoFactorCofirmation.delete({
+          where: { id: existingconfirmation.id },
+        });
+      }
+      await db.twoFactorCofirmation.create({
+        data: {
+          userId: exsistinguser.id,
+        },
+      });
     } else {
       const twofactor = await genrateTwoFactor(exsistinguser.email);
       await twoFactorToken(twofactor.email, twofactor.token);
@@ -59,9 +90,3 @@ export const login = async (value: z.infer<typeof loginSchema>) => {
   console.log("success:login successfull");
   return { success: "Login successful", error: null };
 };
-
-//db operation
-// api key involvement
-//genratetwofactor token,generateverificationtoken sendtwofactoremailtoken
-//before signin check 2fa
-//const check for token using tokenbyemail
