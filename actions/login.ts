@@ -8,7 +8,7 @@ import { AuthError } from "next-auth";
 import { getuserByEmail } from "@/data/user";
 import { genrateTwoFactor, TokenVerified } from "@/lib/token";
 import { sendEmailVerification, twoFactorToken } from "@/lib/mail";
-import { getTwoFactorByEmail } from "@/data/two-factor-token";
+import { getTwoFactorByEmail } from "@/data/two-factor-token"; //twofactorbyemail
 import { error } from "console";
 import { getTwoFactorConfrimationById } from "@/data/two-factor-confirmation";
 import { db } from "@/lib/db";
@@ -18,7 +18,9 @@ export const login = async (value: z.infer<typeof loginSchema>) => {
   if (!validateFields.success) {
     return { error: "invalid login", success: null };
   }
+  console.log("validate data", validateFields.data);
   const { email, password, code } = validateFields.data;
+  console.log({ email, password, code });
   const exsistinguser = await getuserByEmail(email);
   if (!exsistinguser || !exsistinguser.email || !exsistinguser.password) {
     return { error: "User not found  ", success: null };
@@ -34,6 +36,7 @@ export const login = async (value: z.infer<typeof loginSchema>) => {
     return { success: "email verification sent", error: null };
   }
   if (exsistinguser.isTwoFactorEnabled && exsistinguser.email) {
+    console.log({ code });
     if (code) {
       //verfiy code
       //checkign of the code with the database
@@ -42,15 +45,18 @@ export const login = async (value: z.infer<typeof loginSchema>) => {
       // check if its expired or not
       const twofactortoken = await getTwoFactorByEmail(exsistinguser.email);
       if (!twofactortoken) {
-        return { error: "Invalid code" };
+        return { error: "Invalid code", success: null };
       }
-      if (twofactortoken.token != code) {
-        return { error: "Invalid code" };
+      if (twofactortoken.token !== code) {
+        return { error: "Invalid code", success: null };
       }
       const hasExipred = new Date(twofactortoken.expires) < new Date();
       if (hasExipred) {
-        return { error: "Code expired" };
+        return { error: "Code expired", success: null };
       }
+      await db.twoFactorToken.delete({
+        where: { id: twofactortoken.id },
+      });
       const existingconfirmation = await getTwoFactorConfrimationById(
         exsistinguser.id
       );

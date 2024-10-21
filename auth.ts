@@ -6,6 +6,7 @@ import { getuserById } from "./data/user";
 import { UserRole } from "@prisma/client";
 import { twoFactorToken } from "./lib/mail";
 import { getTwoFactorConfrimationById } from "./data/two-factor-confirmation";
+import { getAccountByUserId } from "./data/accounts";
 export const { auth, handlers, signIn, signOut } = NextAuth({
   pages: {
     signIn: "/auth/login",
@@ -26,10 +27,10 @@ export const { auth, handlers, signIn, signOut } = NextAuth({
   callbacks: {
     async signIn({ user, account }) {
       if (account?.provider !== "credentials") return true;
-
+      console.log("provider", account.provider);
       const exsistingUser = await getuserById(user.id);
       if (!exsistingUser?.emailVerified) return false;
-      // console.log("userlogged in")
+      console.log("userlogged in");
       if (exsistingUser.isTwoFactorEnabled) {
         const twofactor = await getTwoFactorConfrimationById(exsistingUser.id);
         console.log({ twofactor });
@@ -39,7 +40,7 @@ export const { auth, handlers, signIn, signOut } = NextAuth({
         //delete the twofactor for next user
         await db.twoFactorCofirmation.delete({
           where: {
-            id: exsistingUser.id,
+            id: twofactor.id,
           },
         });
       }
@@ -55,16 +56,29 @@ export const { auth, handlers, signIn, signOut } = NextAuth({
       if (token.role && session.user) {
         session.user.role = token.role as UserRole;
       }
+      if (session.user) {
+        session.user.isTwoFactorEnabled = token.isTwoFactorEnabled as boolean;
+      }
+      if (session.user) {
+        session.user.name = token.name;
+        session.user.email = token.email;
+        session.user.isOAuth = token.isOAuth as boolean;
+      }
       return session;
     },
     async jwt({ token }) {
-      // console.log(token)
+      console.log("i am beign called here");
       if (!token.sub) return token;
 
       const existinguser = await getuserById(token.sub);
+
       if (!existinguser) return token;
-      console.log(existinguser.role);
+      const exsistingAccount = await getAccountByUserId(existinguser.id);
+      token.isOAuth == !!exsistingAccount;
+      token.email = existinguser.email;
+      token.name = existinguser.name;
       token.role = existinguser.role;
+      token.isTwoFactorEnabled = existinguser.isTwoFactorEnabled;
 
       return token;
     },

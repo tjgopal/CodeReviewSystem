@@ -42,18 +42,20 @@ const LoginForm = () => {
   });
   const onSubmit = (values: z.infer<typeof loginSchema>) => {
     // axios.post('/auth/login',values).then((response)=>console.log(response))
+    console.log(values);
     setIsError("");
     setIsSucess("");
     startTransistion(() => {
       login(values)
         .then((data) => {
+          console.log(data);
           if (data?.error) {
             form.reset();
-            setIsError(isError);
+            setIsError(data.error);
           }
           if (data?.success) {
             form.reset();
-            setIsSucess(isSucess);
+            setIsSucess(data.success);
           }
           if (data?.twofactor) {
             setShowTwoFactor(true);
@@ -75,7 +77,7 @@ const LoginForm = () => {
             {showTwoFactor && (
               <FormField
                 control={form.control}
-                name="2FA code"
+                name="code"
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Enter 2FA code</FormLabel>
