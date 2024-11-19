@@ -6,7 +6,7 @@ interface ProtectedChildren {
 
 const ProtectLayout = ({ children }: ProtectedChildren) => {
   return (
-    <div className="h-full w-full flex flex-col gap-10 items-center justify-center bg-blue-300">
+    <div className="pt-10 h-full w-full flex flex-col gap-10 items-center justify-center bg-blue-300">
       <Navbar />
       {children}
     </div>

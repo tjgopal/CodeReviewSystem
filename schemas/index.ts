@@ -1,6 +1,17 @@
 import { UserRole } from "@prisma/client";
 import * as z from "zod";
 
+export const codeSchema = z.object({
+  code: z
+    .string()
+    .min(1, { message: "Code cannot be empty" }) // Ensure code isn't empty
+    .max(5000, { message: "Code exceeds maximum length" }), // Optional max length
+  question: z
+    .string()
+    .min(1, { message: "Question cannot be empty" }) // Ensure question isn't empty
+    .max(500, { message: "Question is too long" }), // Optional max length for questions
+});
+
 export const SettingsSchema = z
   .object({
     name: z.string().optional(),

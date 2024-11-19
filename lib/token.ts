@@ -39,7 +39,7 @@ export const genrateTwoFactor = async (email: string) => {
 export const generatePasswordByToken = async (email: string) => {
   //generating a new pasword
   const token = uuidv4();
-  const expires = new Date(new Date().getTime() + 3600 * 1000);
+  const expires = new Date(new Date().getTime() + 10 * 60 * 1000);
   const exisitingtoken = await PasswrodResetTokenByEmail(email); // checking if data is present inor not
   if (exisitingtoken) {
     await db.passwordRestToken.delete({
@@ -61,7 +61,7 @@ export const generatePasswordByToken = async (email: string) => {
 export const TokenVerified = async (email: string) => {
   //generateverificationtoken
   const token = uuidv4();
-  const expiry = new Date(new Date().getTime() + 3600 * 1000);
+  const expiry = new Date(new Date().getTime() + 600 * 1000);
   const existingtoken = await getVerificationTokenByEmail(email);
   console.log("emailverified", existingtoken);
   if (existingtoken) {

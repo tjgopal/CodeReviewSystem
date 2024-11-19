@@ -18,7 +18,7 @@ const UserInfo = ({ user, label }: UserInfoProps) => {
           <div className="flex flex-row items-center justify-between p-2 rounded-xl shadow-sm">
             <p className="text-sm font-medium">ID</p>
             <p className="truncate  text-xs max-w-[190px] p-1 bg-slate-50 rounded-md">
-              {user.id}
+              {user?.id}
             </p>
           </div>
           <div className="flex flex-row items-center justify-between p-2 rounded-xl shadow-sm">

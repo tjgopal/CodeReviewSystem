@@ -1,6 +1,7 @@
+// app/(protected)/settings/page.tsx
+
 "use client";
 
-import { SettingsServerActions } from "@/actions/settiings";
 import { FormError } from "@/components/form-error";
 import { FormSucess } from "@/components/form-success";
 import { Button } from "@/components/ui/button";
@@ -8,105 +9,103 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import {
   Form,
   FormControl,
-  FormDescription,
   FormField,
   FormItem,
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
-import { Select } from "@/components/ui/select";
-import { UseCurrentUSer } from "@/hooks/use-current-user";
 
-import { SettingsSchema } from "@/schemas";
+import { codeSchema } from "@/schemas";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { UserRole } from "@prisma/client";
-import {
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { useSession } from "next-auth/react";
 
 import { useState, useTransition } from "react";
 import { useForm } from "react-hook-form";
 
 import { z } from "zod";
-import { Switch } from "@/components/ui/switch";
-//updating session
+
+import axios from "axios";
+import { Textarea } from "@/components/ui/textarea";
 
 const Settings = () => {
-  const user = UseCurrentUSer();
   const [error, setError] = useState<string | undefined>();
-  const [sucess, setSucess] = useState<string | undefined>();
-  const { update } = useSession();
+  const [success, setSuccess] = useState<string | undefined>();
+  const [results, setResults] = useState<string | undefined>();
+  const [isResultVisible, setIsResultVisible] = useState<boolean>(false);
+
   const [isPending, setTransistion] = useTransition();
-  const form = useForm<z.infer<typeof SettingsSchema>>({
-    resolver: zodResolver(SettingsSchema),
+  const form = useForm<z.infer<typeof codeSchema>>({
+    resolver: zodResolver(codeSchema),
     defaultValues: {
-      password: undefined,
-      newpassword: undefined,
-      name: user?.name || undefined,
-      email: user?.email || undefined,
-      role: user?.role || undefined,
-      is2FaEnabled: user?.isTwoFactorEnabled || undefined,
+      code: undefined,
+      question: undefined,
     },
   });
-  const onSubmit = (values: z.infer<typeof SettingsSchema>) => {
-    setTransistion(() => {
-      SettingsServerActions(values)
-        .then((data) => {
-          if (data?.error) {
-            setError(data.error);
-          }
-          if (data?.sucess) {
-            setSucess(data.sucess);
-          }
-        })
-        .catch(() => setError("Something went Wrong"));
-    });
+
+  const onSubmit = async (values: z.infer<typeof codeSchema>) => {
+    console.log(values);
+    try {
+      const response = await axios.post("/api/routes", {
+        code: values.code,
+        question: values.question,
+      });
+      const apiResult = response.data.result.content;
+      console.log("API Result:", apiResult);
+      setResults(apiResult);
+      setIsResultVisible(true);
+      setSuccess("Your code has been submitted successfully!");
+    } catch (error) {
+      console.error(error);
+      setError("An error occurred while submitting your code.");
+    }
   };
+
   return (
-    <Card className="w-[600px]">
-      <CardHeader>
-        <p className="text-2xl font-medium">🧑🏻‍💻 Settings</p>
-        <CardContent>
-          <Form {...form}>
-            <form className="space-y-4" onSubmit={form.handleSubmit(onSubmit)}>
-              <div className="space-y-4">
-                <FormField
-                  control={form.control}
-                  name="name"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Name</FormLabel>
-                      <FormControl>
-                        <Input
-                          {...field}
-                          placeholder="Enter name"
-                          type="name"
-                          disabled={isPending}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                {user?.isOAuth === false && (
-                  <>
+    <div className="relative overflow-y-auto h-screen">
+      {isResultVisible && (
+        <div className="fixed inset-0 flex items-center justify-center z-50  ">
+          {/* Modal overlay */}
+          <div className="absolute inset-0 bg-black opacity-50 "></div>
+
+          <div className="bg-white p-8 rounded-md shadow-md z-10 max-w-2xl mx-auto relative overflow-y-auto max-h-[80vh]">
+            {/* Close button */}
+            <button
+              className="absolute top-2 right-2 text-gray-500 hover:text-gray-700 text-2xl font-bold focus:outline-none"
+              onClick={() => setIsResultVisible(false)}
+            >
+              &times;
+            </button>
+            <h2 className="text-xl font-semibold mb-4 text-black">
+              Review Results: 🧑🏻‍💻
+            </h2>
+            <p className="whitespace-pre-wrap text-black">{results}</p>
+          </div>
+        </div>
+      )}
+
+      <div className={`${isResultVisible ? "blur-md" : ""}`}>
+        <Card className="w-[800px] mx-auto">
+          <CardHeader className="space-y-4">
+            <p className="text-2xl font-medium w-full text-center">
+              🧑🏻‍💻 Code Reviewer
+            </p>
+            <CardContent>
+              <Form {...form}>
+                <form
+                  className="space-y-4"
+                  onSubmit={form.handleSubmit(onSubmit)}
+                >
+                  <div className="space-y-4">
                     <FormField
                       control={form.control}
-                      name="email"
+                      name="code"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Email</FormLabel>
+                          <FormLabel>Enter your code here </FormLabel>
                           <FormControl>
-                            <Input
+                            <Textarea
+                              placeholder="Enter your code here </>"
+                              className="min-h-96"
                               {...field}
-                              placeholder="example@gmail.com"
-                              type="email"
-                              disabled={isPending}
                             />
                           </FormControl>
                           <FormMessage />
@@ -115,104 +114,31 @@ const Settings = () => {
                     />
                     <FormField
                       control={form.control}
-                      name="password"
+                      name="question"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Password</FormLabel>
+                          <FormLabel>Enter your question here </FormLabel>
                           <FormControl>
-                            <Input
+                            <Textarea
+                              placeholder="Enter your question here"
                               {...field}
-                              placeholder="***********"
-                              type="password"
-                              disabled={isPending}
                             />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
                       )}
                     />
-                    <FormField
-                      control={form.control}
-                      name="newpassword"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>New Password</FormLabel>
-                          <FormControl>
-                            <Input
-                              {...field}
-                              placeholder="***********"
-                              type="password"
-                              disabled={isPending}
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </>
-                )}
-                <FormField
-                  control={form.control}
-                  name="role"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Role</FormLabel>
-                      <Select
-                        disabled={isPending}
-                        onValueChange={field.onChange}
-                        defaultValue={field.value}
-                      >
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="select a role" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          <SelectItem value={UserRole.ADMIN}>Admin</SelectItem>
-                          <SelectItem value={UserRole.USER}>User</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </FormItem>
-                  )}
-                />
-                {user?.isOAuth === false && (
-                  <>
-                    <FormField
-                      control={form.control}
-                      name="is2FaEnabled"
-                      render={({ field }) => (
-                        <FormItem className="flex flex-row justify-between p-3 items-center shadow-sm rounded-lg border">
-                          <div className="space-y-0.5">
-                            <FormLabel>
-                              2FA Authentication
-                              <FormDescription>
-                                Enable 2Fa for your Account
-                              </FormDescription>
-                            </FormLabel>
-                          </div>
-                          <FormControl>
-                            <Switch
-                              disabled={isPending}
-                              checked={field.value}
-                              onCheckedChange={field.onChange}
-                            />
-                          </FormControl>
-                        </FormItem>
-                      )}
-                    />
-                  </>
-                )}
-              </div>
-              <FormError message={error} />
-              <FormSucess message={sucess} />
-              <Button disabled={isPending} type="submit">
-                Save
-              </Button>
-            </form>
-          </Form>
-        </CardContent>
-      </CardHeader>
-    </Card>
+                  </div>
+                  <FormError message={error} />
+                  <FormSucess message={success} />
+                  <Button type="submit">Check</Button>
+                </form>
+              </Form>
+            </CardContent>
+          </CardHeader>
+        </Card>
+      </div>
+    </div>
   );
 };
 
